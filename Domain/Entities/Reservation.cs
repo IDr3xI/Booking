@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Domain.Entities
 {
-    internal class Reservation
+    public class Reservation
     {
         [Key]
         public int Id { get; set; }
