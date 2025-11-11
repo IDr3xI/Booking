@@ -1,0 +1,34 @@
+﻿@page "/history"
+
+<h3 class="text-xl font-semibold mb-3">Moje historie rezervací</h3>
+
+<table class="table-auto border-collapse border w-full">
+    <thead class="bg-gray-200">
+        <tr>
+            <th class="border px-3 py-1">Datum</th>
+            <th class="border px-3 py-1">Místnost</th>
+            <th class="border px-3 py-1">Místo</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var r in Reservations)
+        {
+            <tr>
+                <td class="border px-3 py-1">@r.Date.ToShortDateString()</td>
+                <td class="border px-3 py-1">@r.Room</td>
+                <td class="border px-3 py-1">@r.Seat</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    record Reservation(DateOnly Date, string Room, string Seat);
+
+    List<Reservation> Reservations = new()
+    {
+        new(DateOnly.FromDateTime(DateTime.Now.AddDays(-1)), "Red Zone", "RZ-01"),
+        new(DateOnly.FromDateTime(DateTime.Now.AddDays(-3)), "Blue Zone", "BZ-02"),
+        new(DateOnly.FromDateTime(DateTime.Now.AddDays(-5)), "Green Zone", "GZ-02")
+    };
+}

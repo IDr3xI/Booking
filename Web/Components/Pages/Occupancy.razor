@@ -1,0 +1,37 @@
+﻿@page "/occupancy"
+
+<h3 class="text-xl font-semibold mb-3">Aktuální obsazenost</h3>
+
+<select @bind="selectedRoomId" class="p-2 border rounded">
+    @foreach (var room in Rooms)
+    {
+        <option value="@room.Id">@room.Name</option>
+    }
+</select>
+
+<div class="mt-4 grid grid-cols-2 gap-4">
+    @foreach (var seat in SelectedRoom?.Seats ?? Enumerable.Empty<Seat>())
+    {
+        <div class="p-4 border rounded text-center"
+             style="background:@(seat.IsBooked ? "#fca5a5" : "#bbf7d0")">
+            <b>@seat.Code</b><br />
+            @(seat.IsBooked? seat.BookedBy: "Volné")
+        </div>
+    }
+</div>
+
+@code {
+    record Seat(int Id, string Code, bool IsBooked, string? BookedBy);
+    record Room(int Id, string Name, List<Seat> Seats);
+
+    List<Room> Rooms = new()
+    {
+        new(1, "Red Zone", new() { new(1, "RZ-01", true, "Jan Novák"), new(2, "RZ-02", false, null) }),
+        new(2, "Blue Zone", new() { new(3, "BZ-01", false, null), new(4, "BZ-02", true, "Petr Svoboda") }),
+        new(3, "Green Zone", new() { new(5, "GZ-01", true, "Eva Malá"), new(6, "GZ-02", false, null) })
+    };
+
+    int selectedRoomId = 1;
+
+    Room? SelectedRoom => Rooms.FirstOrDefault(r => r.Id == selectedRoomId);
+}

@@ -1,0 +1,34 @@
+﻿@page "/report"
+
+<h3 class="text-xl font-semibold mb-3">Vytíženost míst</h3>
+
+<table class="table-auto border-collapse border w-full">
+    <thead class="bg-gray-200">
+        <tr>
+            <th class="border px-3 py-1">Místnost</th>
+            <th class="border px-3 py-1">Místo</th>
+            <th class="border px-3 py-1">Počet dnů rezervováno</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var r in ReportData)
+        {
+            <tr>
+                <td class="border px-3 py-1">@r.Room</td>
+                <td class="border px-3 py-1">@r.Seat</td>
+                <td class="border px-3 py-1 text-center">@r.DaysBooked</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    record ReportItem(string Room, string Seat, int DaysBooked);
+
+    List<ReportItem> ReportData = new()
+    {
+        new("Red Zone", "RZ-01", 10),
+        new("Blue Zone", "BZ-02", 7),
+        new("Green Zone", "GZ-01", 4)
+    };
+}

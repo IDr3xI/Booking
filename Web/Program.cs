@@ -1,21 +1,24 @@
-using Web.Components;
+using Application.Interfaces;
+using Application.Services;
 using Infrastructure.Data;
 using Infrastructure.Data.Seed;
+using Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Web.Components;
+using Web.Pages;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
+builder.Services.AddRazorPages();
+builder.Services.AddServerSideBlazor();
+
 // DB context
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        b => b.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
-// Authentication
-builder.Services.AddAuthentication("Negotiate")
-    .AddNegotiate();
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Repositories & services
+builder.Services.AddScoped<IReservationService, ReservationService>();
+builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
 
 var app = builder.Build();
 
@@ -27,13 +30,19 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+// Seed database
+DatabaseSeeder.EnsureDatabaseCreated(app.Services);
+
 app.UseHttpsRedirection();
+app.UseStaticFiles();
+app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
 
+app.MapBlazorHub();
+app.MapRazorPages();
 
-app.UseAntiforgery();
-
-app.MapStaticAssets();
-app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
+// Fallback must point to the host page that renders the Blazor app
+app.MapFallbackToPage("/_Host");
 
 app.Run();

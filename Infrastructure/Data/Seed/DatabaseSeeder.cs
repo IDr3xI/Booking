@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Domain.Entities;
-using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Data.Seed;
 
@@ -28,5 +29,12 @@ public static class DatabaseSeeder
         modelBuilder.Entity<User>().HasData(
             new User { Id = 1, Username = "johndoe", Email = "john.doe@seyfor.com" }
         );
+    }
+    public static void EnsureDatabaseCreated(IServiceProvider services)
+    {
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        db.Database.Migrate();
+        //TODO: Seed(db);
     }
 }
