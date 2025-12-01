@@ -4,7 +4,6 @@ using Infrastructure.Data;
 using Infrastructure.Data.Seed;
 using Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
-using Web.Components;
 using Web.Pages;
 
 var builder = WebApplication.CreateBuilder(args);
