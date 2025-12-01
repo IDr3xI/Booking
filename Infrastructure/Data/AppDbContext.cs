@@ -1,12 +1,6 @@
 ﻿using Domain.Entities;
-using Infrastructure.Data.Seed;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Infrastructure.Data;
 
@@ -24,7 +18,11 @@ public class AppDbContext : DbContext
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
-        modelBuilder.Entity<Room>().HasMany(r => r.Seats).WithOne(s => s.Room);
+        modelBuilder.Entity<Room>()
+            .HasMany(r => r.Seats)
+            .WithOne(s => s.Room)
+            .HasForeignKey(s => s.RoomId)
+            .OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<Seat>().HasMany(s => s.Reservations).WithOne(r => r.Seat);
         modelBuilder.Entity<User>().HasMany(u => u.Reservations).WithOne(r => r.User);
     }

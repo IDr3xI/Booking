@@ -58,3 +58,34 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+.seats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 60px);
+    grid-gap: 10px;
+    margin-top: 15px;
+}
+
+.seat-btn {
+    width: 60px;
+    height: 60px;
+    font-weight: bold;
+    border-radius: 6px;
+    border: none;
+}
+
+.seat-free {
+    background-color: #4CAF50; /* zelená */
+    color: white;
+}
+
+.seat-occupied {
+    background-color: #d9534f; /* èervená */
+    color: white;
+}
+
+.seat-selected {
+    background-color: #0275d8; /* modrá */
+    color: white;
+    transform: scale(1.1);
+}

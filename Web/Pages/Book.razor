@@ -1,0 +1,152 @@
+﻿@page "/reservation"
+
+@using Domain.Entities
+@using Application.Interfaces
+
+@inject IReservationRepository ReservationRepository
+@inject ISeatRepository SeatRepository
+@inject IRoomRepository RoomRepository
+
+<h2 class="text-2xl font-bold mb-4">Rezervace místnosti</h2>
+
+<label>Vyber datum:</label>
+<input type="date" @bind="SelectedDateString" @bind:format="yyyy-MM-dd" class="border p-2 mb-4" />
+
+@if (Rooms != null)
+{
+    foreach (var room in Rooms)
+    {
+        <h3 class="text-xl font-semibold mt-6">@room.Name</h3>
+
+        <div class="room-container">
+            @foreach (var seat in room.Seats)
+            {
+                <button class="@GetSeatCss(seat)" @onclick="() => SelectSeat(seat)">
+                    @seat.Code
+                </button>
+            }
+        </div>
+    }
+}
+
+@if (SelectedSeat is not null)
+{
+    <div class="mt-4 p-4 bg-light border rounded shadow-sm">
+        <h4>Chcete rezervovat místo?</h4>
+
+        <p>
+            <strong>Místnost:</strong> @SelectedSeat.Room.Name<br />
+            <strong>Místo:</strong> @SelectedSeat.Code<br />
+            <strong>Datum:</strong> @SelectedDate.ToShortDateString()
+        </p>
+
+        <button class="btn btn-primary" @onclick="ConfirmReservation">
+            Potvrdit rezervaci
+        </button>
+
+        <button class="btn btn-secondary ms-2" @onclick="CancelSelection">
+            Zrušit
+        </button>
+    </div>
+}
+
+@code {
+    List<Room>? Rooms;
+    List<Reservation> Reservations = new();
+    Seat? SelectedSeat;
+
+    DateTime SelectedDate = DateTime.Today;
+
+    string SelectedDateString
+    {
+        get => SelectedDate.ToString("yyyy-MM-dd");
+        set => SelectedDate = DateTime.Parse(value);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Rooms = await RoomRepository.GetAllWithSeatsAsync();
+        Reservations = await ReservationRepository.GetByDateAsync(SelectedDate);
+
+        // připojení místností do Seat.Room
+        foreach (var room in Rooms)
+        {
+            foreach (var seat in room.Seats)
+                seat.Room = room;
+        }
+    }
+
+    private async Task SelectSeat(Seat seat)
+    {
+        SelectedSeat = seat;
+    }
+
+    private async Task ReserveSeat()
+    {
+        if (SelectedSeat == null)
+            return;
+
+        var newReservation = new Reservation
+        {
+            SeatId = SelectedSeat.Id,
+            BookDate = DateOnly.FromDateTime(SelectedDate),
+            CreateDate = DateTime.Now
+        };
+
+        await ReservationRepository.GetByDateAsync(newReservation.CreateDate);
+
+        Reservations = await ReservationRepository.GetByDateAsync(SelectedDate);
+        SelectedSeat = null;
+
+        StateHasChanged();
+    }
+
+    string GetSeatCss(Seat seat)
+    {
+        bool isOccupied = Reservations.Any(r =>
+            r.SeatId == seat.Id &&
+            r.BookDate.ToDateTime(TimeOnly.MinValue).Date == SelectedDate.Date);
+
+        if (isOccupied)
+            return "seat-occupied";
+
+        if (SelectedSeat?.Id == seat.Id)
+            return "seat-selected";
+
+        return "seat-free";
+    }
+}
+
+<style>
+    .room-container {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .seat-free {
+        background: #d1fae5;
+        padding: 10px 20px;
+        border-radius: 6px;
+    }
+
+    .seat-selected {
+        background: #93c5fd;
+        padding: 10px 20px;
+        border-radius: 6px;
+        border: 2px solid blue;
+    }
+
+    .seat-occupied {
+        background: #fca5a5;
+        padding: 10px 20px;
+        border-radius: 6px;
+    }
+
+    .reserve-btn {
+        background: #2563eb;
+        color: white;
+        padding: 10px 20px;
+        margin-top: 10px;
+    }
+</style>

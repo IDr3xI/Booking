@@ -1,10 +1,10 @@
 using Application.Interfaces;
 using Application.Services;
+using Infrastructure.Repositories;
 using Infrastructure.Data;
 using Infrastructure.Data.Seed;
-using Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
-using Web.Pages;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,8 +16,14 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Repositories & services
-builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
+builder.Services.AddScoped<IReservationService, ReservationService>();
+
+builder.Services.AddScoped<IRoomRepository, RoomRepository>();
+builder.Services.AddScoped<IRoomService, RoomService>();
+
+builder.Services.AddScoped<ISeatRepository, SeatRepository>();
+//builder.Services.AddScoped<ISeatService, SeatService>();
 
 var app = builder.Build();
 
