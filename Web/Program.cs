@@ -2,7 +2,6 @@ using Application.Interfaces;
 using Application.Services;
 using Infrastructure.Repositories;
 using Infrastructure.Data;
-using Infrastructure.Data.Seed;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -13,8 +12,11 @@ builder.Services.AddServerSideBlazor();
 
 // DB context
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        b => b.MigrationsAssembly("Infrastructure")
+    )
+);
 // Repositories & services
 builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
@@ -35,9 +37,6 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-// Seed database
-DatabaseSeeder.EnsureDatabaseCreated(app.Services);
-
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
@@ -47,7 +46,6 @@ app.UseAuthorization();
 app.MapBlazorHub();
 app.MapRazorPages();
 
-// Fallback must point to the host page that renders the Blazor app
 app.MapFallbackToPage("/_Host");
 
 app.Run();

@@ -7,23 +7,23 @@ namespace Infrastructure.Repositories;
 
 public class SeatRepository : ISeatRepository
 {
-    private readonly AppDbContext _context;
+    private readonly AppDbContext _db;
 
-    public SeatRepository(AppDbContext context)
+    public SeatRepository(AppDbContext db)
     {
-        _context = context;
+        _db = db;
     }
 
     public async Task<List<Seat>> GetAllAsync()
     {
-        return await _context.Seats
+        return await _db.Seats
             .Include(s => s.Room)
             .ToListAsync();
     }
 
     public async Task<List<Seat>> GetByRoomIdAsync(int roomId)
     {
-        return await _context.Seats
+        return await _db.Seats
             .Where(s => s.RoomId == roomId)
             .Include(s => s.Room)
             .ToListAsync();
@@ -31,26 +31,26 @@ public class SeatRepository : ISeatRepository
 
     public async Task<Seat?> GetByIdAsync(int id)
     {
-        return await _context.Seats
+        return await _db.Seats
             .Include(s => s.Room)
             .FirstOrDefaultAsync(s => s.Id == id);
     }
 
     public async Task AddAsync(Seat seat)
     {
-        _context.Seats.Add(seat);
-        await _context.SaveChangesAsync();
+        _db.Seats.Add(seat);
+        await _db.SaveChangesAsync();
     }
 
     public async Task UpdateAsync(Seat seat)
     {
-        _context.Seats.Update(seat);
-        await _context.SaveChangesAsync();
+        _db.Seats.Update(seat);
+        await _db.SaveChangesAsync();
     }
 
     public async Task DeleteAsync(Seat seat)
     {
-        _context.Seats.Remove(seat);
-        await _context.SaveChangesAsync();
+        _db.Seats.Remove(seat);
+        await _db.SaveChangesAsync();
     }
 }

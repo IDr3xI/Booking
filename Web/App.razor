@@ -3,8 +3,8 @@
 
 <Router AppAssembly="@typeof(Program).Assembly">
     <Found Context="routeData">
-            <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
-        </Found>
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+    </Found>
     <NotFound>
         <LayoutView Layout="@typeof(MainLayout)">
             <p>Stránka nebyla nalezena.</p>

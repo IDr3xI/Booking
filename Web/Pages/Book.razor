@@ -66,13 +66,12 @@
     protected override async Task OnInitializedAsync()
     {
         Rooms = await RoomRepository.GetAllWithSeatsAsync();
+        Console.WriteLine($"ROOMS LOADED: {Rooms.Count}");
         Reservations = await ReservationRepository.GetByDateAsync(SelectedDate);
 
-        // připojení místností do Seat.Room
         foreach (var room in Rooms)
         {
-            foreach (var seat in room.Seats)
-                seat.Room = room;
+            Console.WriteLine($"ROOM: {room.Name}, SEATS: {room.Seats.Count}");
         }
     }
 
@@ -101,7 +100,7 @@
         StateHasChanged();
     }
 
-    string GetSeatCss(Seat seat)
+    string GetSeatCss(Seat seat) 
     {
         bool isOccupied = Reservations.Any(r =>
             r.SeatId == seat.Id &&

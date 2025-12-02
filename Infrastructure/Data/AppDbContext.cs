@@ -17,6 +17,8 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        Infrastructure.Data.Seed.DatabaseSeeder.Seed(modelBuilder);
+
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         modelBuilder.Entity<Room>()
             .HasMany(r => r.Seats)
