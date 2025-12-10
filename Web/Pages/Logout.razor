@@ -1,0 +1,11 @@
+﻿@page "/logout"
+@inject NavigationManager Nav
+
+<p>Odhlašuji…</p>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Nav.NavigateTo("/auth/signout", forceLoad: true);
+    }
+}

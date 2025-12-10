@@ -18,6 +18,7 @@ public class RoomRepository : IRoomRepository
     {
         return await _db.Rooms
             .Include(r => r.Seats)
+            .AsNoTracking()
             .OrderBy(r => r.Id)
             .ToListAsync();
     }

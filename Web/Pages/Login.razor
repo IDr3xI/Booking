@@ -1,0 +1,44 @@
+﻿@page "/login"
+@using Microsoft.AspNetCore.Components.Forms
+@inject NavigationManager Nav
+
+<EditForm Model="@model" OnValidSubmit="HandleLogin">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <label>Email:</label>
+        <InputText @bind-Value="model.Email" class="form-control" />
+        <ValidationMessage For="@(() => model.Email)" />
+    </div>
+
+    <div>
+        <label>Heslo:</label>
+        <InputText @bind-Value="model.Password" type="password" class="form-control" />
+        <ValidationMessage For="@(() => model.Password)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-2">Přihlásit</button>
+</EditForm>
+
+@code {
+    private LoginModel model = new();
+
+    public class LoginModel
+    {
+        [System.ComponentModel.DataAnnotations.Required]
+        [System.ComponentModel.DataAnnotations.EmailAddress]
+        public string Email { get; set; } = "";
+
+        [System.ComponentModel.DataAnnotations.Required]
+        public string Password { get; set; } = "";
+    }
+
+    private Task HandleLogin()
+    {
+        var url = $"/auth/signin?email={Uri.EscapeDataString(model.Email)}&password={Uri.EscapeDataString(model.Password)}";
+        Nav.NavigateTo(url, forceLoad: true);
+        return Task.CompletedTask;
+    }
+}
+

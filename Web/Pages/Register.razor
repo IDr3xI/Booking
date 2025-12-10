@@ -1,0 +1,93 @@
+﻿@page "/register"
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Identity
+@using System.ComponentModel.DataAnnotations
+@using Domain.Entities
+@inject UserManager<User> UserManager
+@inject SignInManager<User> SignInManager
+@inject NavigationManager Nav
+
+<h3>Registrace</h3>
+
+<EditForm Model="@model" OnValidSubmit="HandleRegister" OnInvalidSubmit="HandleInvalid">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <label>Email:</label>
+        <InputText @bind-Value="model.Email" class="form-control" />
+        <ValidationMessage For="@(() => model.Email)" />
+    </div>
+
+    <div>
+        <label>Heslo:</label>
+        <InputText @bind-Value="model.Password" type="password" class="form-control" />
+        <ValidationMessage For="@(() => model.Password)" />
+    </div>
+
+    <button type="submit" class="btn btn-success mt-2">Registrovat</button>
+
+    @if (errorMessages.Count > 0)
+    {
+        <ul class="text-danger mt-2">
+            @foreach (var msg in errorMessages)
+            {
+                <li>@msg</li>
+            }
+        </ul>
+    }
+</EditForm>
+
+@code {
+    RegisterModel model = new();
+    List<string> errorMessages = new();
+
+    public class RegisterModel
+    {
+        [Required(ErrorMessage = "Email je povinný.")]
+        [EmailAddress(ErrorMessage = "Zadejte platný email.")]
+        public string Email { get; set; } = "";
+
+        [Required(ErrorMessage = "Heslo je povinné.")]
+        [StringLength(100, MinimumLength = 6, ErrorMessage = "Heslo musí mít alespoň {2} znaků.")]
+        public string Password { get; set; } = "";
+    }
+
+    private void HandleInvalid()
+    {
+        // Chyby validace se zobrazí přes <ValidationSummary/> a <ValidationMessage/>.
+        // Můžeme vyčistit serverové chyby:
+        errorMessages.Clear();
+    }
+
+    private async Task HandleRegister()
+    {
+        errorMessages.Clear();
+
+        var user = new User { UserName = model.Email, Email = model.Email };
+
+        IdentityResult result;
+        try
+        {
+            result = await UserManager.CreateAsync(user, model.Password);
+        }
+        catch (Exception ex)
+        {
+            errorMessages.Add("Registrace selhala: " + ex.Message);
+            return;
+        }
+
+        if (result.Succeeded)
+        {
+            var url = $"/auth/signin?email={Uri.EscapeDataString(model.Email)}&password={Uri.EscapeDataString(model.Password)}";
+            Nav.NavigateTo(url, forceLoad: true);
+        }
+        else
+        {
+            foreach (var error in result.Errors)
+            {
+                errorMessages.Add(error.Description);
+            }
+        }
+    }
+}

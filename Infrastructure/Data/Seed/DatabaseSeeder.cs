@@ -21,7 +21,26 @@ public static class DatabaseSeeder
             new Seat { Id = 6, RoomId = 3, Code = "B2" }
         );
         modelBuilder.Entity<User>().HasData(
-            new User { Id = 1, Username = "johndoe", Email = "john.doe@seyfor.com" }
+            new User
+            {
+                Id = "1",
+                DisplayName = "johndoe",
+
+                NormalizedUserName = "JOHNDOE",
+                Email = "john.doe@seyfor.com",
+                NormalizedEmail = "JOHN.DOE@SEYFOR.COM",
+                EmailConfirmed = false,
+                PhoneNumberConfirmed = false,
+                TwoFactorEnabled = false,
+                LockoutEnabled = false,
+                AccessFailedCount = 0,
+
+                SecurityStamp = "00000000-0000-0000-0000-000000000001",
+                ConcurrencyStamp = "00000000-0000-0000-0000-000000000002",
+
+                // Optional: seed a known password hash if potřebujete přihlášení
+                // PasswordHash = "<static hash>",
+            }
         );
     }
 }

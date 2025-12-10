@@ -1,16 +1,54 @@
 @inherits LayoutComponentBase
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Routing
+@inject NavigationManager Nav
 
 <div class="page">
-    <main class="container content">
+    <div class="sidebar">
+        <nav>
+            <ul>
+                <AuthorizeView>
+                    <Authorized>
+                        <li>
+                            <NavLink href="/" Match="NavLinkMatch.All">Domù</NavLink>
+                        </li>
+                        <li>
+                            <NavLink href="/account/manage" Match="NavLinkMatch.Prefix">Mùj úèet</NavLink>
+                        </li>
+                        <li>
+                            <NavLink href="/logout" Match="NavLinkMatch.All">Odhlásit</NavLink>
+                        </li>
+                    </Authorized>
+
+                    <NotAuthorized>
+                        <li>
+                            <NavLink href="/" Match="NavLinkMatch.All">Domù</NavLink>
+                        </li>
+                        <li>
+                            <NavLink href="/login" Match="NavLinkMatch.All">Pøihlásit</NavLink>
+                        </li>
+                        <li>
+                            <NavLink href="/register" Match="NavLinkMatch.All">Registrace</NavLink>
+                        </li>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </ul>
+        </nav>
+    </div>
+    <main>
         @Body
     </main>
-
-    <footer class="footer">
-        <div class="container">
-            <small>&copy; @DateTime.Now.Year — Booking</small>
-        </div>
-    </footer>
 </div>
+
+<AuthorizeView>
+    <Authorized>
+        <NavLink href="/logout" Match="NavLinkMatch.All">Odhlásit</NavLink>
+    </Authorized>
+    <NotAuthorized>
+        <NavLink href="/login" Match="NavLinkMatch.All">Pøihlásit</NavLink>
+        <NavLink href="/register" Match="NavLinkMatch.All">Registrovat</NavLink>
+    </NotAuthorized>
+</AuthorizeView>
 
 <style>
 .page { display:flex; flex-direction:column; min-height:100vh; }

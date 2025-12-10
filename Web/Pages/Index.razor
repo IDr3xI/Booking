@@ -1,5 +1,14 @@
 ﻿@page "/"
+@inject NavigationManager Nav
 @using Microsoft.AspNetCore.Components.Routing
+
+@using System.Net.Http
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.JSInterop
+
 
 <h3 class="text-2xl font-bold mb-4">Rezervační systém míst</h3>
 
@@ -9,3 +18,12 @@
     <NavLink class="btn" href="/report">Aktuální obsazenost</NavLink>
     <NavLink class="btn" href="/occupancy">Vytíženost míst</NavLink>
 </div>
+
+<h3>Test interaktivity</h3>
+<button class="btn btn-primary" @onclick="Inc">Klik</button>
+<p>count: @count</p>
+
+@code {
+    int count;
+    void Inc() { count++; Console.WriteLine($"Inc => {count}"); }
+}

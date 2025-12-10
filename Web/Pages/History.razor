@@ -1,34 +1,71 @@
 ﻿@page "/history"
+@using Domain.Entities
+@using Application.Interfaces
+@using Microsoft.AspNetCore.Components.Authorization
 
-<h3 class="text-xl font-semibold mb-3">Moje historie rezervací</h3>
+<h3>Moje rezervace</h3>
 
-<table class="table-auto border-collapse border w-full">
-    <thead class="bg-gray-200">
-        <tr>
-            <th class="border px-3 py-1">Datum</th>
-            <th class="border px-3 py-1">Místnost</th>
-            <th class="border px-3 py-1">Místo</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var r in Reservations)
-        {
+@if (isLoading)
+{
+    <p>Načítám rezervace...</p>
+}
+else if (Reservations is null || !Reservations.Any())
+{
+    <p>Nemáte žádné rezervace.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
             <tr>
-                <td class="border px-3 py-1">@r.Date.ToShortDateString()</td>
-                <td class="border px-3 py-1">@r.Room</td>
-                <td class="border px-3 py-1">@r.Seat</td>
+                <th>Místnost</th>
+                <th>Sedadlo</th>
+                <th>Datum</th>
+                <th>Vytvořeno</th>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @foreach (var r in Reservations)
+            {
+                <tr>
+                    <td>@r.Seat?.Room?.Name</td>
+                    <td>@r.Seat?.Code</td>
+                    <td>@r.BookDate.ToShortDateString()</td>
+                    <td>@r.CreateDate.ToString("g")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
 
 @code {
-    record Reservation(DateOnly Date, string Room, string Seat);
+    private List<Reservation> Reservations = new();
+    private bool isLoading = true;
 
-    List<Reservation> Reservations = new()
+    [Inject] IReservationRepository ReservationRepository { get; set; }
+    [Inject] AuthenticationStateProvider AuthenticationStateProvider { get; set; }
+
+    protected override async Task OnInitializedAsync()
     {
-        new(DateOnly.FromDateTime(DateTime.Now.AddDays(-1)), "Red Zone", "RZ-01"),
-        new(DateOnly.FromDateTime(DateTime.Now.AddDays(-3)), "Blue Zone", "BZ-02"),
-        new(DateOnly.FromDateTime(DateTime.Now.AddDays(-5)), "Green Zone", "GZ-02")
-    };
+        var auth = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = auth.User;
+
+        if (!user.Identity?.IsAuthenticated ?? true)
+        {
+            Reservations = new();
+            isLoading = false;
+            return;
+        }
+
+        var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            Reservations = new();
+            isLoading = false;
+            return;
+        }
+
+        Reservations = await ReservationRepository.GetByUserAsync(userId);
+        isLoading = false;
+    }
 }
