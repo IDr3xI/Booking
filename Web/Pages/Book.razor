@@ -16,9 +16,8 @@
 <h2 class="text-2xl font-bold mb-4">Rezervace místnosti</h2>
 
 <label>Vyber datum:</label>
-<input type="date" @bind="SelectedDateString" @bind:format="yyyy-MM-dd" class="border p-2 mb-4" />
+<input type="date" @bind="SelectedDate" @bind:format="yyyy-MM-dd" class="border p-2 mb-4" />
 
-<!-- Dočasně bez ErrorBoundary, ať se UI neblokuje -->
 @if (Rooms is null)
 {
     <p>Načítám místnosti…</p>
@@ -35,10 +34,15 @@ else
         <div class="room-container">
             @foreach (var seat in (room.Seats ?? Enumerable.Empty<Seat>()))
             {
+                var occupied = IsSeatOccupied(seat, SelectedDate);
+                var canCancelOwn = occupied && IsOccupiedByCurrentUser(seat, SelectedDate);
                 <button @key="seat.Id"
                         type="button"
                         class="@GetSeatCss(seat)"
-                        @onclick="() => SelectSeat(seat)">
+                        disabled="@(occupied && !canCancelOwn)"
+                        aria-disabled="@(occupied && !canCancelOwn)"
+                        title="@(occupied ? (canCancelOwn ? "Kliknutím zrušíte svou rezervaci" : "Místo je obsazené") : "Kliknutím vyberete místo")"
+                        @onclick="() => OnSeatClick(seat)">
                     @seat.Code
                 </button>
             }
@@ -70,6 +74,31 @@ else
         </div>
     }
 
+    @if (PendingCancelReservation is not null)
+    {
+        <div class="mt-4 p-4 bg-light border rounded shadow-sm">
+            <div>Vybraná rezervace ke zrušení: @PendingCancelReservation.Seat?.Code</div>
+
+            <h4>Opravdu chcete zrušit svou rezervaci?</h4>
+
+            <p>
+                <strong>Místnost:</strong> @PendingCancelReservation.Seat?.Room?.Name<br />
+                <strong>Místo:</strong> @PendingCancelReservation.Seat?.Code<br />
+                <strong>Datum:</strong> @PendingCancelReservation.BookDate.ToShortDateString()
+            </p>
+
+            <div class="mt-2">
+                <button type="button" class="btn btn-danger" @onclick="ConfirmCancelReservation">
+                    Zrušit rezervaci
+                </button>
+
+                <button type="button" class="btn btn-secondary ms-2" @onclick="DismissCancelReservation">
+                    Ne, ponechat
+                </button>
+            </div>
+        </div>
+    }
+
     <p><em>Datum:</em> @SelectedDate.ToShortDateString()</p>
     <p><em>Vybraný seat:</em> @(SelectedSeat?.Code ?? "žádný")</p>
 }
@@ -82,39 +111,120 @@ else
     List<Reservation> Reservations = new();
     Seat? SelectedSeat;
 
-    DateTime SelectedDate = DateTime.Today;
+    // Nové: pending potvrzení zrušení
+    Reservation? PendingCancelReservation;
 
-    string SelectedDateString
+    private DateTime _selectedDate = DateTime.Today;
+    DateTime SelectedDate
     {
-        get => SelectedDate.ToString("yyyy-MM-dd");
+        get => _selectedDate;
         set
         {
-            try
-            {
-                if (!string.IsNullOrWhiteSpace(value))
-                {
-                    SelectedDate = DateTime.ParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture).Date;
-                    SelectedSeat = null;
+            var newDate = value.Date;
+            if (_selectedDate == newDate) return;
 
-                    // Klíčové: nevolat fire-and-forget Task bez zachycení
-                    _ = InvokeAsync(async () =>
-                    {
-                        Reservations = await ReservationRepository.GetByDateAsync(SelectedDate);
-                        StateHasChanged();
-                    });
-                }
-            }
-            catch (Exception ex)
+            _selectedDate = newDate;
+            SelectedSeat = null;
+            PendingCancelReservation = null;
+
+            _ = InvokeAsync(async () =>
             {
-                Console.Error.WriteLine($"Parsování data selhalo: {ex}");
+                Reservations = await ReservationRepository.GetByDateAsync(_selectedDate);
+                StateHasChanged();
+            });
+        }
+    }
+
+    private async Task<string?> GetCurrentUserIdAsync()
+    {
+        var auth = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = auth.User;
+        if (!user.Identity?.IsAuthenticated ?? true) return null;
+        return user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    }
+
+    private bool IsOccupiedByCurrentUser(Seat seat, DateTime date)
+    {
+        var userId = _cachedUserId;
+        if (string.IsNullOrWhiteSpace(userId)) return false;
+
+        var d = DateOnly.FromDateTime(date);
+        return Reservations.Any(r => r.SeatId == seat.Id && r.BookDate == d && r.UserId == userId);
+    }
+
+    private async Task OnSeatClick(Seat seat)
+    {
+        // Pokud je místo obsazené a současně je to rezervace aktuálního uživatele, vyžádej potvrzení zrušení
+        if (IsSeatOccupied(seat, SelectedDate))
+        {
+            var userId = await EnsureUserIdAsync();
+            if (string.IsNullOrWhiteSpace(userId)) return;
+
+            var d = DateOnly.FromDateTime(SelectedDate);
+            var myReservation = Reservations.FirstOrDefault(r =>
+                r.SeatId == seat.Id &&
+                r.BookDate == d &&
+                r.UserId == userId);
+
+            if (myReservation is not null)
+            {
+                PendingCancelReservation = myReservation;
+                SelectedSeat = null; // pro přehlednost
+                StateHasChanged();
+                return;
+            }
+
+            // Obsazeno někým jiným -> nic nedělat
+            return;
+        }
+
+        // Jinak standardní výběr volného místa
+        SelectSeat(seat);
+    }
+
+    private async Task ConfirmCancelReservation()
+    {
+        if (PendingCancelReservation is null) return;
+
+        try
+        {
+            var deleted = await ReservationRepository.DeleteAsync(PendingCancelReservation.Id);
+            if (deleted)
+            {
+                Reservations = await ReservationRepository.GetByDateAsync(SelectedDate);
+                PendingCancelReservation = null;
+                SelectedSeat = null;
+                StateHasChanged();
             }
         }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Zrušení rezervace selhalo: {ex}");
+        }
+    }
+
+    private void DismissCancelReservation()
+    {
+        PendingCancelReservation = null;
+        StateHasChanged();
+    }
+
+    private string? _cachedUserId;
+    private async Task<string?> EnsureUserIdAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(_cachedUserId)) return _cachedUserId;
+        _cachedUserId = await GetCurrentUserIdAsync();
+        return _cachedUserId;
     }
 
     private void SelectSeat(Seat seat)
     {
+        if (IsSeatOccupied(seat, SelectedDate))
+            return;
+
         Console.WriteLine($"SelectSeat called for seat {seat.Id} {seat.Code}");
         SelectedSeat = seat;
+        PendingCancelReservation = null;
         StateHasChanged();
     }
 
@@ -125,23 +235,17 @@ else
             if (SelectedSeat is null)
                 return;
 
-            var auth = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            var user = auth.User;
-            if (!user.Identity?.IsAuthenticated ?? true)
-                return;
-
-            var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userId = await EnsureUserIdAsync();
             if (string.IsNullOrWhiteSpace(userId))
                 return;
 
-            // finální kontrola, zda mezitím neobsazeno
             if (IsSeatOccupied(SelectedSeat, SelectedDate))
                 return;
 
             var newReservation = new Reservation
             {
                 SeatId = SelectedSeat.Id,
-                UserId = userId,
+                UserId = userId!,
                 BookDate = DateOnly.FromDateTime(SelectedDate),
                 CreateDate = DateTime.UtcNow
             };
@@ -202,6 +306,7 @@ else
         {
             Rooms = await RoomRepository.GetAllWithSeatsAsync();
             Reservations = await ReservationRepository.GetByDateAsync(SelectedDate);
+            _cachedUserId = await GetCurrentUserIdAsync();
             StateHasChanged();
         }
         catch (Exception ex)
@@ -252,6 +357,6 @@ else
     }
 </style>
 
-<button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => { Console.WriteLine("Test klikujte"); SelectedSeat = null; StateHasChanged(); }">
+<button type="button" class="btn btn-sm btn-outline-secondary" @onclick='() => { Console.WriteLine("Test klikujte"); SelectedSeat = null; PendingCancelReservation = null; StateHasChanged(); }'>
     Test klik
 </button>

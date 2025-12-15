@@ -19,6 +19,8 @@ public class ReservationRepository : IReservationRepository
         var d = DateOnly.FromDateTime(date);
 
         return await _db.Reservations
+            .Include(r => r.Seat)
+            .ThenInclude(s => s.Room)
             .Where(r => r.BookDate == d)
             .ToListAsync();
     }
@@ -45,5 +47,27 @@ public class ReservationRepository : IReservationRepository
         _db.Reservations.Add(reservation);
         await _db.SaveChangesAsync();
         return reservation;
+    }
+
+    public async Task<bool> DeleteAsync(int reservationId)
+    {
+        var entity = await _db.Reservations.FirstOrDefaultAsync(r => r.Id == reservationId);
+        if (entity is null) return false;
+
+        _db.Reservations.Remove(entity);
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> DeleteAsync(int seatId, DateOnly bookDate, string userId)
+    {
+        var entity = await _db.Reservations
+            .FirstOrDefaultAsync(r => r.SeatId == seatId && r.BookDate == bookDate && r.UserId == userId);
+
+        if (entity is null) return false;
+
+        _db.Reservations.Remove(entity);
+        await _db.SaveChangesAsync();
+        return true;
     }
 }
