@@ -21,6 +21,7 @@ public class ReservationRepository : IReservationRepository
         return await _db.Reservations
             .Include(r => r.Seat)
             .ThenInclude(s => s.Room)
+            .Include(r => r.User) // tooltip: jméno uživatele
             .Where(r => r.BookDate == d)
             .ToListAsync();
     }
@@ -30,6 +31,7 @@ public class ReservationRepository : IReservationRepository
         return await _db.Reservations
             .Include(r => r.Seat)
             .ThenInclude(s => s.Room)
+            .Include(r => r.User)
             .Where(r => r.UserId == userId)
             .OrderByDescending(r => r.BookDate)
             .ToListAsync();
@@ -37,6 +39,10 @@ public class ReservationRepository : IReservationRepository
 
     public async Task<Reservation> CreateAsync(Reservation reservation)
     {
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        if (reservation.BookDate < today)
+            throw new InvalidOperationException("Nelze rezervovat zpětně. Vyber dnešní nebo budoucí datum.");
+
         var exists = await _db.Reservations.AnyAsync(r =>
             r.SeatId == reservation.SeatId &&
             r.BookDate == reservation.BookDate);
@@ -54,17 +60,9 @@ public class ReservationRepository : IReservationRepository
         var entity = await _db.Reservations.FirstOrDefaultAsync(r => r.Id == reservationId);
         if (entity is null) return false;
 
-        _db.Reservations.Remove(entity);
-        await _db.SaveChangesAsync();
-        return true;
-    }
-
-    public async Task<bool> DeleteAsync(int seatId, DateOnly bookDate, string userId)
-    {
-        var entity = await _db.Reservations
-            .FirstOrDefaultAsync(r => r.SeatId == seatId && r.BookDate == bookDate && r.UserId == userId);
-
-        if (entity is null) return false;
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        if (entity.BookDate < today)
+            return false;
 
         _db.Reservations.Remove(entity);
         await _db.SaveChangesAsync();

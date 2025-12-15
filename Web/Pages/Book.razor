@@ -18,6 +18,11 @@
 <label>Vyber datum:</label>
 <input type="date" @bind="SelectedDate" @bind:format="yyyy-MM-dd" class="border p-2 mb-4" />
 
+@if (!string.IsNullOrWhiteSpace(ErrorMessage))
+{
+    <div class="alert alert-danger" role="alert">@ErrorMessage</div>
+}
+
 @if (Rooms is null)
 {
     <p>Načítám místnosti…</p>
@@ -36,12 +41,14 @@ else
             {
                 var occupied = IsSeatOccupied(seat, SelectedDate);
                 var canCancelOwn = occupied && IsOccupiedByCurrentUser(seat, SelectedDate);
+                var isPast = SelectedDate.Date < DateTime.Today;
+
                 <button @key="seat.Id"
                         type="button"
                         class="@GetSeatCss(seat)"
-                        disabled="@(occupied && !canCancelOwn)"
-                        aria-disabled="@(occupied && !canCancelOwn)"
-                        title="@(occupied ? (canCancelOwn ? "Kliknutím zrušíte svou rezervaci" : "Místo je obsazené") : "Kliknutím vyberete místo")"
+                        disabled="@(occupied && !(canCancelOwn && !isPast))"
+                        aria-disabled="@(occupied && !(canCancelOwn && !isPast))"
+                        title="@GetSeatTitle(seat, occupied, canCancelOwn, isPast)"
                         @onclick="() => OnSeatClick(seat)">
                     @seat.Code
                 </button>
@@ -51,6 +58,7 @@ else
 
     @if (SelectedSeat is not null)
     {
+        var isPast = SelectedDate.Date < DateTime.Today;
         <div class="mt-4 p-4 bg-light border rounded shadow-sm">
             <div>Vybráno: @SelectedSeat.Code</div>
 
@@ -62,8 +70,18 @@ else
                 <strong>Datum:</strong> @SelectedDate.ToShortDateString()
             </p>
 
+            @if (isPast)
+            {
+                <div class="alert alert-info" role="alert">
+                    Nelze rezervovat zpětně. Vyberte dnešní nebo budoucí datum.
+                </div>
+            }
+
             <div class="mt-2">
-                <button type="button" class="btn btn-primary" @onclick="ReserveSeat">
+                <button type="button" class="btn btn-primary"
+                        disabled="@isPast"
+                        title="@(isPast ? "Nelze rezervovat zpětně" : "Potvrdit rezervaci")"
+                        @onclick="ReserveSeat">
                     Potvrdit rezervaci
                 </button>
 
@@ -76,6 +94,8 @@ else
 
     @if (PendingCancelReservation is not null)
     {
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var cancelAllowed = PendingCancelReservation.BookDate >= today;
         <div class="mt-4 p-4 bg-light border rounded shadow-sm">
             <div>Vybraná rezervace ke zrušení: @PendingCancelReservation.Seat?.Code</div>
 
@@ -87,8 +107,18 @@ else
                 <strong>Datum:</strong> @PendingCancelReservation.BookDate.ToShortDateString()
             </p>
 
+            @if (!cancelAllowed)
+            {
+                <div class="alert alert-info" role="alert">
+                    Zrušení nelze provést zpětně. Lze pouze dnes nebo pro budoucí datum.
+                </div>
+            }
+
             <div class="mt-2">
-                <button type="button" class="btn btn-danger" @onclick="ConfirmCancelReservation">
+                <button type="button" class="btn btn-danger"
+                        disabled="@( !cancelAllowed )"
+                        title="@(cancelAllowed ? "Zrušit rezervaci" : "Zrušení zpětně není povoleno")"
+                        @onclick="ConfirmCancelReservation">
                     Zrušit rezervaci
                 </button>
 
@@ -98,21 +128,16 @@ else
             </div>
         </div>
     }
-
-    <p><em>Datum:</em> @SelectedDate.ToShortDateString()</p>
-    <p><em>Vybraný seat:</em> @(SelectedSeat?.Code ?? "žádný")</p>
 }
-
-<button type="button" class="btn btn-sm btn-outline-secondary" @onclick="Inc">Test klik</button>
-<p>count: @count</p>
 
 @code {
     List<Room>? Rooms;
     List<Reservation> Reservations = new();
     Seat? SelectedSeat;
 
-    // Nové: pending potvrzení zrušení
     Reservation? PendingCancelReservation;
+
+    string? ErrorMessage;
 
     private DateTime _selectedDate = DateTime.Today;
     DateTime SelectedDate
@@ -126,6 +151,7 @@ else
             _selectedDate = newDate;
             SelectedSeat = null;
             PendingCancelReservation = null;
+            ErrorMessage = null;
 
             _ = InvokeAsync(async () =>
             {
@@ -152,9 +178,41 @@ else
         return Reservations.Any(r => r.SeatId == seat.Id && r.BookDate == d && r.UserId == userId);
     }
 
+    private string GetSeatTitle(Seat seat, bool occupied, bool canCancelOwn, bool isPast)
+    {
+        if (!occupied)
+        {
+            return !isPast ? "Kliknutím vyberete místo" : "Nelze rezervovat zpětně";
+        }
+
+        if (canCancelOwn)
+        {
+            return !isPast ? "Kliknutím zrušíte svou rezervaci (dnes nebo budoucí datum)" : "Zrušit nelze zpětně";
+        }
+
+        var d = DateOnly.FromDateTime(SelectedDate);
+        var res = Reservations.FirstOrDefault(r => r.SeatId == seat.Id && r.BookDate == d);
+        if (res is null)
+        {
+            return "Místo je obsazené";
+        }
+
+        // Preferuj e-mail z res.User.Email, fallback na UserId
+        var email = res.User?.Email;
+        var who = !string.IsNullOrWhiteSpace(email) ? email : res.UserId;
+
+        var createdLocal = res.CreateDate.ToLocalTime();
+        var createdStr = createdLocal.ToString("dd.MM.yyyy HH:mm", CultureInfo.CurrentCulture);
+
+        return $"Obsazeno: {who} (rezervováno {createdStr})";
+    }
+
     private async Task OnSeatClick(Seat seat)
     {
-        // Pokud je místo obsazené a současně je to rezervace aktuálního uživatele, vyžádej potvrzení zrušení
+        ErrorMessage = null;
+
+        var isPast = SelectedDate.Date < DateTime.Today;
+
         if (IsSeatOccupied(seat, SelectedDate))
         {
             var userId = await EnsureUserIdAsync();
@@ -168,17 +226,20 @@ else
 
             if (myReservation is not null)
             {
+                if (isPast)
+                {
+                    return;
+                }
+
                 PendingCancelReservation = myReservation;
-                SelectedSeat = null; // pro přehlednost
+                SelectedSeat = null;
                 StateHasChanged();
                 return;
             }
 
-            // Obsazeno někým jiným -> nic nedělat
             return;
         }
 
-        // Jinak standardní výběr volného místa
         SelectSeat(seat);
     }
 
@@ -186,26 +247,42 @@ else
     {
         if (PendingCancelReservation is null) return;
 
+        ErrorMessage = null;
+
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        if (PendingCancelReservation.BookDate < today)
+        {
+            return;
+        }
+
         try
         {
             var deleted = await ReservationRepository.DeleteAsync(PendingCancelReservation.Id);
+            Reservations = await ReservationRepository.GetByDateAsync(SelectedDate);
+
             if (deleted)
             {
-                Reservations = await ReservationRepository.GetByDateAsync(SelectedDate);
                 PendingCancelReservation = null;
                 SelectedSeat = null;
-                StateHasChanged();
             }
+            else
+            {
+                ErrorMessage = "Rezervaci se nepodařilo zrušit.";
+            }
+
+            StateHasChanged();
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"Zrušení rezervace selhalo: {ex}");
+            ErrorMessage = "Zrušení rezervace selhalo.";
         }
     }
 
     private void DismissCancelReservation()
     {
         PendingCancelReservation = null;
+        ErrorMessage = null;
         StateHasChanged();
     }
 
@@ -225,6 +302,7 @@ else
         Console.WriteLine($"SelectSeat called for seat {seat.Id} {seat.Code}");
         SelectedSeat = seat;
         PendingCancelReservation = null;
+        ErrorMessage = null;
         StateHasChanged();
     }
 
@@ -232,6 +310,8 @@ else
     {
         try
         {
+            ErrorMessage = null;
+
             if (SelectedSeat is null)
                 return;
 
@@ -240,6 +320,9 @@ else
                 return;
 
             if (IsSeatOccupied(SelectedSeat, SelectedDate))
+                return;
+
+            if (SelectedDate.Date < DateTime.Today)
                 return;
 
             var newReservation = new Reservation
@@ -256,13 +339,26 @@ else
             SelectedSeat = null;
             StateHasChanged();
         }
+        catch (InvalidOperationException ex)
+        {
+            ErrorMessage = ex.Message;
+            Reservations = await ReservationRepository.GetByDateAsync(SelectedDate);
+            StateHasChanged();
+        }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"Rezervace selhala: {ex}");
+            ErrorMessage = "Rezervace selhala. Zkuste to prosím znovu.";
+            Reservations = await ReservationRepository.GetByDateAsync(SelectedDate);
+            StateHasChanged();
         }
     }
 
-    private void CancelSelection() => SelectedSeat = null;
+    private void CancelSelection() 
+    {
+        SelectedSeat = null;
+        ErrorMessage = null;
+    }
 
     private async Task ReloadReservationsForSelectedDate()
     {
@@ -356,7 +452,3 @@ else
         cursor: not-allowed;
     }
 </style>
-
-<button type="button" class="btn btn-sm btn-outline-secondary" @onclick='() => { Console.WriteLine("Test klikujte"); SelectedSeat = null; PendingCancelReservation = null; StateHasChanged(); }'>
-    Test klik
-</button>

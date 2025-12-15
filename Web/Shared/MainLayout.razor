@@ -40,16 +40,6 @@
     </main>
 </div>
 
-<AuthorizeView>
-    <Authorized>
-        <NavLink href="/logout" Match="NavLinkMatch.All">Odhlásit</NavLink>
-    </Authorized>
-    <NotAuthorized>
-        <NavLink href="/login" Match="NavLinkMatch.All">Pøihlásit</NavLink>
-        <NavLink href="/register" Match="NavLinkMatch.All">Registrovat</NavLink>
-    </NotAuthorized>
-</AuthorizeView>
-
 <style>
 .page { display:flex; flex-direction:column; min-height:100vh; }
 .topbar { background:#222; color:#fff; padding:0.5rem 0; }
