@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260105092305_Initital")]
-    partial class Initital
+    [Migration("20260105151829_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -111,9 +111,6 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<int>("DaysReserved")
-                        .HasColumnType("int");
-
                     b.Property<int>("RoomId")
                         .HasColumnType("int");
 
@@ -128,42 +125,54 @@ namespace Infrastructure.Migrations
                         {
                             Id = 1,
                             Code = "R1",
-                            DaysReserved = 0,
                             RoomId = 1
                         },
                         new
                         {
                             Id = 2,
                             Code = "R2",
-                            DaysReserved = 0,
                             RoomId = 1
                         },
                         new
                         {
                             Id = 3,
-                            Code = "G1",
-                            DaysReserved = 0,
-                            RoomId = 2
+                            Code = "R3",
+                            RoomId = 1
                         },
                         new
                         {
                             Id = 4,
-                            Code = "G2",
-                            DaysReserved = 0,
+                            Code = "G1",
                             RoomId = 2
                         },
                         new
                         {
                             Id = 5,
-                            Code = "B1",
-                            DaysReserved = 0,
-                            RoomId = 3
+                            Code = "G2",
+                            RoomId = 2
                         },
                         new
                         {
                             Id = 6,
+                            Code = "G3",
+                            RoomId = 2
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Code = "B1",
+                            RoomId = 3
+                        },
+                        new
+                        {
+                            Id = 8,
                             Code = "B2",
-                            DaysReserved = 0,
+                            RoomId = 3
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Code = "B3",
                             RoomId = 3
                         });
                 });
@@ -237,23 +246,6 @@ namespace Infrastructure.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = "1",
-                            AccessFailedCount = 0,
-                            ConcurrencyStamp = "00000000-0000-0000-0000-000000000002",
-                            DisplayName = "johndoe",
-                            Email = "john.doe@seyfor.com",
-                            EmailConfirmed = false,
-                            LockoutEnabled = false,
-                            NormalizedEmail = "JOHN.DOE@SEYFOR.COM",
-                            NormalizedUserName = "JOHNDOE",
-                            PhoneNumberConfirmed = false,
-                            SecurityStamp = "00000000-0000-0000-0000-000000000001",
-                            TwoFactorEnabled = false
-                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

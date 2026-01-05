@@ -7,7 +7,6 @@ public class ReservationDto
     public int SeatId { get; set; }
     public DateTime Date { get; set; }
     public DateTime CreatedAt { get; set; }
-
     public string? SeatCode { get; set; }
     public string? RoomName { get; set; }
     public string? UserDisplayName { get; set; }

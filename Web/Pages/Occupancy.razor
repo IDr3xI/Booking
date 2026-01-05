@@ -1,37 +1,152 @@
 ﻿@page "/occupancy"
+@using System.Globalization
+@using Domain.Entities
+@using Application.Interfaces
+@attribute [AllowAnonymous]
 
-<h3 class="text-xl font-semibold mb-3">Aktuální obsazenost</h3>
+@inject IRoomRepository RoomRepository
+@inject IReservationRepository ReservationRepository
 
-<select @bind="selectedRoomId" class="p-2 border rounded">
+<h2 class="text-2xl font-bold mb-4">Aktuální obsazenost</h2>
+
+<label>Vyber datum:</label>
+<input type="date" @bind="SelectedDate" @bind:format="yyyy-MM-dd" class="border p-2 mb-4" />
+
+@if (!string.IsNullOrWhiteSpace(ErrorMessage))
+{
+    <div class="alert alert-danger" role="alert">@ErrorMessage</div>
+}
+
+@if (Rooms is null)
+{
+    <p>Načítám místnosti…</p>
+}
+else if (!Rooms.Any())
+{
+    <p>Žádné místnosti k dispozici.</p>
+}
+else
+{
     @foreach (var room in Rooms)
     {
-        <option value="@room.Id">@room.Name</option>
-    }
-</select>
+        <h3 class="text-xl font-semibold mt-6">@room.Name</h3>
+        <div class="room-container">
+            @foreach (var seat in (room.Seats ?? Enumerable.Empty<Seat>()))
+            {
+                var occupied = IsSeatOccupied(seat, SelectedDate);
 
-<div class="mt-4 grid grid-cols-2 gap-4">
-    @foreach (var seat in SelectedRoom?.Seats ?? Enumerable.Empty<Seat>())
-    {
-        <div class="p-4 border rounded text-center"
-             style="background:@(seat.IsBooked ? "#fca5a5" : "#bbf7d0")">
-            <b>@seat.Code</b><br />
-            @(seat.IsBooked? seat.BookedBy: "Volné")
+                <span @key="seat.Id"
+                      class="@GetSeatCss(occupied)"
+                      title="@GetSeatTitle(seat, occupied)">
+                    @seat.Code
+                </span>
+            }
         </div>
     }
-</div>
+}
 
 @code {
-    record Seat(int Id, string Code, bool IsBooked, string? BookedBy);
-    record Room(int Id, string Name, List<Seat> Seats);
+    List<Room>? Rooms;
+    List<Reservation> Reservations = new();
 
-    List<Room> Rooms = new()
+    string? ErrorMessage;
+
+    private DateTime _selectedDate = DateTime.Today;
+    DateTime SelectedDate
     {
-        new(1, "Red Zone", new() { new(1, "RZ-01", true, "Jan Novák"), new(2, "RZ-02", false, null) }),
-        new(2, "Blue Zone", new() { new(3, "BZ-01", false, null), new(4, "BZ-02", true, "Petr Svoboda") }),
-        new(3, "Green Zone", new() { new(5, "GZ-01", true, "Eva Malá"), new(6, "GZ-02", false, null) })
-    };
+        get => _selectedDate;
+        set
+        {
+            var newDate = value.Date;
+            if (_selectedDate == newDate) return;
 
-    int selectedRoomId = 1;
+            _selectedDate = newDate;
+            ErrorMessage = null;
 
-    Room? SelectedRoom => Rooms.FirstOrDefault(r => r.Id == selectedRoomId);
+            _ = InvokeAsync(async () =>
+            {
+                try
+                {
+                    Reservations = await ReservationRepository.GetByDateAsync(_selectedDate);
+                    StateHasChanged();
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"Načtení rezervací selhalo: {ex}");
+                    ErrorMessage = "Načtení rezervací selhalo.";
+                }
+            });
+        }
+    }
+
+    private bool IsSeatOccupied(Seat seat, DateTime date)
+    {
+        return Reservations.Any(r =>
+            r.SeatId == seat.Id &&
+            r.BookDate.ToDateTime(TimeOnly.MinValue).Date == date.Date);
+    }
+
+    private string GetSeatCss(bool isOccupied)
+    {
+        if (isOccupied) return "seat-occupied ro";
+        return "seat-free ro";
+    }
+
+    private string GetSeatTitle(Seat seat, bool occupied)
+    {
+        if (!occupied) return "Volné místo";
+
+        var d = DateOnly.FromDateTime(SelectedDate);
+        var res = Reservations.FirstOrDefault(r => r.SeatId == seat.Id && r.BookDate == d);
+        if (res is null) return "Obsazeno";
+
+        var email = res.User?.Email;
+        var who = !string.IsNullOrWhiteSpace(email) ? email : res.UserId;
+
+        var createdLocal = res.CreateDate.ToLocalTime();
+        var createdStr = createdLocal.ToString("dd.MM.yyyy HH:mm", CultureInfo.CurrentCulture);
+
+        return $"Obsazeno: {who} (rezervováno {createdStr})";
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Rooms = await RoomRepository.GetAllWithSeatsAsync();
+            Reservations = await ReservationRepository.GetByDateAsync(SelectedDate);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Inicializace selhala: {ex}");
+            ErrorMessage = "Načtení dat selhalo.";
+        }
+    }
 }
+
+<style>
+    .room-container {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .seat-free.ro {
+        background: #d1fae5;
+        padding: 10px 20px;
+        border-radius: 6px;
+        border: 1px solid #10b981;
+        cursor: default;
+        user-select: none;
+    }
+
+    .seat-occupied.ro {
+        background: #fca5a5;
+        padding: 10px 20px;
+        border-radius: 6px;
+        border: 1px solid #ef4444;
+        cursor: default;
+        user-select: none;
+    }
+</style>

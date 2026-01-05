@@ -42,8 +42,8 @@ else
     private List<Reservation> Reservations = new();
     private bool isLoading = true;
 
-    [Inject] IReservationRepository ReservationRepository { get; set; }
-    [Inject] AuthenticationStateProvider AuthenticationStateProvider { get; set; }
+    [Inject] IReservationRepository ReservationRepository { get; set; } = default!;
+    [Inject] AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {

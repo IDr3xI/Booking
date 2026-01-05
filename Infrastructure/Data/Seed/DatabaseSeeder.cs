@@ -15,32 +15,13 @@ public static class DatabaseSeeder
         modelBuilder.Entity<Seat>().HasData(
             new Seat { Id = 1, RoomId = 1, Code = "R1" },
             new Seat { Id = 2, RoomId = 1, Code = "R2" },
-            new Seat { Id = 3, RoomId = 2, Code = "G1" },
-            new Seat { Id = 4, RoomId = 2, Code = "G2" },
-            new Seat { Id = 5, RoomId = 3, Code = "B1" },
-            new Seat { Id = 6, RoomId = 3, Code = "B2" }
-        );
-        modelBuilder.Entity<User>().HasData(
-            new User
-            {
-                Id = "1",
-                DisplayName = "johndoe",
-
-                NormalizedUserName = "JOHNDOE",
-                Email = "john.doe@seyfor.com",
-                NormalizedEmail = "JOHN.DOE@SEYFOR.COM",
-                EmailConfirmed = false,
-                PhoneNumberConfirmed = false,
-                TwoFactorEnabled = false,
-                LockoutEnabled = false,
-                AccessFailedCount = 0,
-
-                SecurityStamp = "00000000-0000-0000-0000-000000000001",
-                ConcurrencyStamp = "00000000-0000-0000-0000-000000000002",
-
-                // Optional: seed a known password hash if potřebujete přihlášení
-                // PasswordHash = "<static hash>",
-            }
+            new Seat { Id = 3, RoomId = 1, Code = "R3" },
+            new Seat { Id = 4, RoomId = 2, Code = "G1" },
+            new Seat { Id = 5, RoomId = 2, Code = "G2" },
+            new Seat { Id = 6, RoomId = 2, Code = "G3" },
+            new Seat { Id = 7, RoomId = 3, Code = "B1" },
+            new Seat { Id = 8, RoomId = 3, Code = "B2" },
+            new Seat { Id = 9, RoomId = 3, Code = "B3" }
         );
     }
 }

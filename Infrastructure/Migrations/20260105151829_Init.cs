@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class Initital : Migration
+    public partial class Init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -180,8 +180,7 @@ namespace Infrastructure.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     RoomId = table.Column<int>(type: "int", nullable: false),
-                    Code = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    DaysReserved = table.Column<int>(type: "int", nullable: false)
+                    Code = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -223,11 +222,6 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.InsertData(
-                table: "AspNetUsers",
-                columns: new[] { "Id", "AccessFailedCount", "ConcurrencyStamp", "DisplayName", "Email", "EmailConfirmed", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName" },
-                values: new object[] { "1", 0, "00000000-0000-0000-0000-000000000002", "johndoe", "john.doe@seyfor.com", false, false, null, "JOHN.DOE@SEYFOR.COM", "JOHNDOE", null, null, false, "00000000-0000-0000-0000-000000000001", false, null });
-
-            migrationBuilder.InsertData(
                 table: "Rooms",
                 columns: new[] { "Id", "Name" },
                 values: new object[,]
@@ -239,15 +233,18 @@ namespace Infrastructure.Migrations
 
             migrationBuilder.InsertData(
                 table: "Seats",
-                columns: new[] { "Id", "Code", "DaysReserved", "RoomId" },
+                columns: new[] { "Id", "Code", "RoomId" },
                 values: new object[,]
                 {
-                    { 1, "R1", 0, 1 },
-                    { 2, "R2", 0, 1 },
-                    { 3, "G1", 0, 2 },
-                    { 4, "G2", 0, 2 },
-                    { 5, "B1", 0, 3 },
-                    { 6, "B2", 0, 3 }
+                    { 1, "R1", 1 },
+                    { 2, "R2", 1 },
+                    { 3, "R3", 1 },
+                    { 4, "G1", 2 },
+                    { 5, "G2", 2 },
+                    { 6, "G3", 2 },
+                    { 7, "B1", 3 },
+                    { 8, "B2", 3 },
+                    { 9, "B3", 3 }
                 });
 
             migrationBuilder.CreateIndex(

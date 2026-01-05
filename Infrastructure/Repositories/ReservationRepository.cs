@@ -20,7 +20,7 @@ public class ReservationRepository : IReservationRepository
 
         return await _db.Reservations
             .Include(r => r.Seat)
-            .ThenInclude(s => s.Room)
+            .ThenInclude(s => s!.Room)
             .Include(r => r.User)
             .Where(r => r.BookDate == d)
             .ToListAsync();
@@ -32,7 +32,7 @@ public class ReservationRepository : IReservationRepository
             .Where(r => r.UserId == userId)
             .OrderByDescending(r => r.CreateDate)
             .Include(r => r.Seat)
-                .ThenInclude(s => s.Room)
+                .ThenInclude(s => s!.Room)
             .Include(r => r.User)
             .ToListAsync();
     }

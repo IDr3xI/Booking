@@ -28,7 +28,6 @@ builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 
 builder.Services.AddScoped<ISeatRepository, SeatRepository>();
-//builder.Services.AddScoped<ISeatService, SeatService>();
 
 // Identity & Authentication
 builder.Services.AddIdentity<User, IdentityRole>(options =>
@@ -53,7 +52,6 @@ builder.Services.AddServerSideBlazor()
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
@@ -69,7 +67,6 @@ app.UseAuthorization();
 app.MapBlazorHub();
 app.MapRazorPages();
 
-// AUTH endpoints – pøihlášení (GET/POST)
 app.MapGet("/auth/signin", async (UserManager<User> userManager, SignInManager<User> signInManager, string email, string password) =>
 {
     var user = await userManager.FindByEmailAsync(email);
@@ -92,7 +89,6 @@ app.MapPost("/auth/signin", async (UserManager<User> userManager, SignInManager<
     return Results.Redirect("/");
 });
 
-// AUTH endpoints – odhlášení (GET/POST)
 app.MapGet("/auth/signout", async (SignInManager<User> signInManager) =>
 {
     await signInManager.SignOutAsync();

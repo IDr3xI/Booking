@@ -9,7 +9,7 @@ public class AppDbContext : IdentityDbContext<User>
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-    public DbSet<User> Users => Set<User>();
+    public new DbSet<User> Users => Set<User>();
     public DbSet<Room> Rooms => Set<Room>();
     public DbSet<Seat> Seats => Set<Seat>();
     public DbSet<Reservation> Reservations => Set<Reservation>();
