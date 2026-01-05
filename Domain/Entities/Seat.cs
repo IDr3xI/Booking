@@ -10,4 +10,5 @@ public class Seat
     public Room? Room { get; set; }
     public string Code { get; set; } = string.Empty;
     public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
+    public int DaysReserved { get; set; }
 }

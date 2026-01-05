@@ -1,34 +1,99 @@
 ﻿@page "/report"
+@using Domain.Entities
+@inject Application.Interfaces.IReservationRepository ReservationRepository
 
-<h3 class="text-xl font-semibold mb-3">Vytíženost míst</h3>
+<h3>Vytíženost míst</h3>
 
-<table class="table-auto border-collapse border w-full">
-    <thead class="bg-gray-200">
-        <tr>
-            <th class="border px-3 py-1">Místnost</th>
-            <th class="border px-3 py-1">Místo</th>
-            <th class="border px-3 py-1">Počet dnů rezervováno</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var r in ReportData)
-        {
-            <tr>
-                <td class="border px-3 py-1">@r.Room</td>
-                <td class="border px-3 py-1">@r.Seat</td>
-                <td class="border px-3 py-1 text-center">@r.DaysBooked</td>
-            </tr>
-        }
-    </tbody>
-</table>
+<EditForm Model="@filter" OnValidSubmit="LoadAsync">
+    <div class="row g-2">
+        <div class="col-auto">
+            <label class="form-label">Datum od</label>
+            <InputDate @bind-Value="filter.From" class="form-control" />
+        </div>
+        <div class="col-auto">
+            <label class="form-label">Datum do</label>
+            <InputDate @bind-Value="filter.To" class="form-control" />
+        </div>
+        <div class="col-auto align-self-end">
+            <button class="btn btn-primary" type="submit">Zobrazit</button>
+        </div>
+    </div>
+</EditForm>
+
+@if (!string.IsNullOrWhiteSpace(error))
+{
+    <div class="alert alert-danger mt-3">@error</div>
+}
+
+@if (data is not null)
+{
+    <div class="table-responsive mt-3">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Místnost</th>
+                    <th>Sedadlo</th>
+                    <th>Počet dnů rezervace</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (data.Count == 0)
+                {
+                    <tr>
+                        <td colspan="3" class="text-center">V zadaném období nejsou žádné rezervace.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var item in data)
+                    {
+                        <tr>
+                            <td>@item.Room?.Name</td>
+                            <td>@item.Code</td>
+                            <td>@item.DaysReserved</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+}
 
 @code {
-    record ReportItem(string Room, string Seat, int DaysBooked);
-
-    List<ReportItem> ReportData = new()
+    private class Filter
     {
-        new("Red Zone", "RZ-01", 10),
-        new("Blue Zone", "BZ-02", 7),
-        new("Green Zone", "GZ-01", 4)
-    };
+        public DateTime From { get; set; } = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+        public DateTime To { get; set; } = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.DaysInMonth(DateTime.Today.Year, DateTime.Today.Month));
+    }
+
+    private readonly Filter filter = new();
+    private List<Seat>? data;
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        error = null;
+
+        if (filter.From.Date > filter.To.Date)
+        {
+            error = "Datum od nesmí být větší než Datum do.";
+            data = new();
+            return;
+        }
+
+        try
+        {
+            data = await ReservationRepository.GetSeatUtilizationAsync(filter.From, filter.To);
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            data = new();
+        }
+    }
 }

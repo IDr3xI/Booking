@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class Init : Migration
+    public partial class Initital : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -59,7 +59,8 @@ namespace Infrastructure.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false)
+                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    DaysReserved = table.Column<int>(type: "int", nullable: false, defaultValue: 0)
                 },
                 constraints: table =>
                 {
@@ -179,7 +180,8 @@ namespace Infrastructure.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     RoomId = table.Column<int>(type: "int", nullable: false),
-                    Code = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false)
+                    Code = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    DaysReserved = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -237,15 +239,15 @@ namespace Infrastructure.Migrations
 
             migrationBuilder.InsertData(
                 table: "Seats",
-                columns: new[] { "Id", "Code", "RoomId" },
+                columns: new[] { "Id", "Code", "DaysReserved", "RoomId" },
                 values: new object[,]
                 {
-                    { 1, "R1", 1 },
-                    { 2, "R2", 1 },
-                    { 3, "G1", 2 },
-                    { 4, "G2", 2 },
-                    { 5, "B1", 3 },
-                    { 6, "B2", 3 }
+                    { 1, "R1", 0, 1 },
+                    { 2, "R2", 0, 1 },
+                    { 3, "G1", 0, 2 },
+                    { 4, "G2", 0, 2 },
+                    { 5, "B1", 0, 3 },
+                    { 6, "B2", 0, 3 }
                 });
 
             migrationBuilder.CreateIndex(

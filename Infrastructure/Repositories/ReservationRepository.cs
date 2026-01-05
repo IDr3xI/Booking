@@ -21,7 +21,7 @@ public class ReservationRepository : IReservationRepository
         return await _db.Reservations
             .Include(r => r.Seat)
             .ThenInclude(s => s.Room)
-            .Include(r => r.User) // tooltip: jméno uživatele
+            .Include(r => r.User)
             .Where(r => r.BookDate == d)
             .ToListAsync();
     }
@@ -29,11 +29,11 @@ public class ReservationRepository : IReservationRepository
     public async Task<List<Reservation>> GetByUserAsync(string userId)
     {
         return await _db.Reservations
-            .Include(r => r.Seat)
-            .ThenInclude(s => s.Room)
-            .Include(r => r.User)
             .Where(r => r.UserId == userId)
-            .OrderByDescending(r => r.BookDate)
+            .OrderByDescending(r => r.CreateDate)
+            .Include(r => r.Seat)
+                .ThenInclude(s => s.Room)
+            .Include(r => r.User)
             .ToListAsync();
     }
 
@@ -67,5 +67,36 @@ public class ReservationRepository : IReservationRepository
         _db.Reservations.Remove(entity);
         await _db.SaveChangesAsync();
         return true;
+    }
+
+    public async Task<List<Seat>> GetSeatUtilizationAsync(DateTime from, DateTime to)
+    {
+        if (from.Date > to.Date)
+            throw new ArgumentException("Datum od nesmí být větší než Datum do.");
+
+        var fromD = DateOnly.FromDateTime(from.Date);
+        var toD = DateOnly.FromDateTime(to.Date);
+
+        return await _db.Reservations
+            .Where(r => r.BookDate >= fromD && r.BookDate <= toD)
+            .GroupBy(r => new
+            {
+                r.SeatId,
+                SeatCode = r.Seat!.Code,
+                RoomId = r.Seat!.RoomId,
+                RoomName = r.Seat!.Room!.Name
+            })
+            .Select(g => new Seat
+            {
+                Id = g.Key.SeatId,
+                Code = g.Key.SeatCode,
+                RoomId = g.Key.RoomId,
+                Room = new Room { Id = g.Key.RoomId, Name = g.Key.RoomName },
+                DaysReserved = g.Count()
+            })
+            .OrderByDescending(x => x.DaysReserved)
+            .ThenBy(x => x.Room!.Name)
+            .ThenBy(x => x.Code)
+            .ToListAsync();
     }
 }

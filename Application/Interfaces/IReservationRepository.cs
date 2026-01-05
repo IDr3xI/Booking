@@ -8,4 +8,5 @@ public interface IReservationRepository
     Task<List<Reservation>> GetByUserAsync(string userId);
     Task<Reservation> CreateAsync(Reservation reservation);
     Task<bool> DeleteAsync(int reservationId);
+    Task<List<Seat>> GetSeatUtilizationAsync(DateTime from, DateTime to);
 }

@@ -60,6 +60,11 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("DaysReserved")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -73,16 +78,19 @@ namespace Infrastructure.Migrations
                         new
                         {
                             Id = 1,
+                            DaysReserved = 0,
                             Name = "RED Zone"
                         },
                         new
                         {
                             Id = 2,
+                            DaysReserved = 0,
                             Name = "GREEN Zone"
                         },
                         new
                         {
                             Id = 3,
+                            DaysReserved = 0,
                             Name = "BLUE Zone"
                         });
                 });
@@ -100,6 +108,9 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<int>("DaysReserved")
+                        .HasColumnType("int");
+
                     b.Property<int>("RoomId")
                         .HasColumnType("int");
 
@@ -114,36 +125,42 @@ namespace Infrastructure.Migrations
                         {
                             Id = 1,
                             Code = "R1",
+                            DaysReserved = 0,
                             RoomId = 1
                         },
                         new
                         {
                             Id = 2,
                             Code = "R2",
+                            DaysReserved = 0,
                             RoomId = 1
                         },
                         new
                         {
                             Id = 3,
                             Code = "G1",
+                            DaysReserved = 0,
                             RoomId = 2
                         },
                         new
                         {
                             Id = 4,
                             Code = "G2",
+                            DaysReserved = 0,
                             RoomId = 2
                         },
                         new
                         {
                             Id = 5,
                             Code = "B1",
+                            DaysReserved = 0,
                             RoomId = 3
                         },
                         new
                         {
                             Id = 6,
                             Code = "B2",
+                            DaysReserved = 0,
                             RoomId = 3
                         });
                 });

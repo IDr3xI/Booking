@@ -15,15 +15,6 @@
 <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
     <NavLink class="btn" href="/reservation">Zabookovat místo</NavLink>
     <NavLink class="btn" href="/history">Moje historie</NavLink>
-    <NavLink class="btn" href="/report">Aktuální obsazenost</NavLink>
-    <NavLink class="btn" href="/occupancy">Vytíženost míst</NavLink>
+    <NavLink class="btn" href="/occupancy">Aktuální obsazenost</NavLink>
+    <NavLink class="btn" href="/report">Vytíženost míst</NavLink>
 </div>
-
-<h3>Test interaktivity</h3>
-<button class="btn btn-primary" @onclick="Inc">Klik</button>
-<p>count: @count</p>
-
-@code {
-    int count;
-    void Inc() { count++; Console.WriteLine($"Inc => {count}"); }
-}

@@ -19,8 +19,11 @@ public class AppDbContext : IdentityDbContext<User>
         base.OnModelCreating(modelBuilder);
 
         Infrastructure.Data.Seed.DatabaseSeeder.Seed(modelBuilder);
-
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+
+        modelBuilder.Entity<Room>()
+            .Property(r => r.DaysReserved)
+            .HasDefaultValue(0);
 
         modelBuilder.Entity<Room>()
             .HasMany(r => r.Seats)
