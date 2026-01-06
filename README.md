@@ -3,7 +3,7 @@
 ## Použité technologie
 Backend: .NET 9, C#<br>
 Frontend: Blazor Server<br>
-Databáze: SQL CE<br>
+Databáze: SQL Server (LocalDB)<br>
 ORM: Entity Framework Core 7<br>
 Autentizace: Windows Authentication
 
