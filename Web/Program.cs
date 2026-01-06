@@ -62,12 +62,6 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
 
-builder.Services.AddRazorPages();
-builder.Services.AddServerSideBlazor();
-
-builder.Services.AddServerSideBlazor()
-    .AddCircuitOptions(o => o.DetailedErrors = true);
-
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

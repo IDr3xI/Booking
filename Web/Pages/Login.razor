@@ -3,7 +3,6 @@
 @using Microsoft.AspNetCore.Identity
 @using Domain.Entities
 @inject NavigationManager Nav
-@inject SignInManager<User> SignInManager
 @inject UserManager<User> UserManager
 
 @if (!string.IsNullOrWhiteSpace(errorMessage))
@@ -56,14 +55,8 @@
             return;
         }
 
-        var result = await SignInManager.PasswordSignInAsync(user, model.Password, isPersistent: false, lockoutOnFailure: false);
-        if (!result.Succeeded)
-        {
-            errorMessage = "Přihlášení se nezdařilo. Zkontrolujte e‑mail a heslo.";
-            return;
-        }
-
-        Nav.NavigateTo("/", forceLoad: true);
+        var url = $"/auth/signin?email={Uri.EscapeDataString(model.Email)}&password={Uri.EscapeDataString(model.Password)}";
+        Nav.NavigateTo(url, forceLoad: true);
     }
 }
 

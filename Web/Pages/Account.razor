@@ -1,0 +1,182 @@
+@page "/account"
+@attribute [Authorize]
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.ComponentModel.DataAnnotations
+@using Domain.Entities
+@inject UserManager<User> UserManager
+@inject SignInManager<User> SignInManager
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
+
+<h2 class="mb-3">Mùj úèet</h2>
+
+@if (loadError is not null)
+{
+    <div class="alert alert-danger">@loadError</div>
+}
+else if (currentUser is null)
+{
+    <p>Naèítám profil…</p>
+}
+else
+{
+    <div class="card mb-4">
+        <div class="card-header">Základní informace</div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">Uživatelské jméno</dt>
+                <dd class="col-sm-9">@currentUser.DisplayName</dd>
+
+                <dt class="col-sm-3">Email</dt>
+                <dd class="col-sm-9">@currentUser.Email</dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">@((hasPassword ? "Zmìna hesla" : "Nastavit heslo"))</div>
+        <div class="card-body">
+            @if (!string.IsNullOrWhiteSpace(successMessage))
+            {
+                <div class="alert alert-success">@successMessage</div>
+            }
+            @if (errorMessages.Count > 0)
+            {
+                <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        @foreach (var e in errorMessages)
+                        {
+                            <li>@e</li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            <EditForm Model="@changeModel" OnValidSubmit="HandleChangePassword">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                @if (hasPassword)
+                {
+                    <div class="mb-3">
+                        <label class="form-label">Souèasné heslo</label>
+                        <InputText @bind-Value="changeModel.CurrentPassword" type="password" class="form-control" autocomplete="current-password" />
+                        <ValidationMessage For="@(() => changeModel.CurrentPassword)" />
+                    </div>
+                }
+
+                <div class="mb-3">
+                    <label class="form-label">Nové heslo</label>
+                    <InputText @bind-Value="changeModel.NewPassword" type="password" class="form-control" autocomplete="new-password" />
+                    <ValidationMessage For="@(() => changeModel.NewPassword)" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Potvrzení nového hesla</label>
+                    <InputText @bind-Value="changeModel.ConfirmPassword" type="password" class="form-control" autocomplete="new-password" />
+                    <ValidationMessage For="@(() => changeModel.ConfirmPassword)" />
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    @(hasPassword ? "Zmìnit heslo" : "Nastavit heslo")
+                </button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code
+{
+    private User? currentUser;
+    private bool hasPassword;
+    private string? loadError;
+    private string? successMessage;
+    private readonly List<string> errorMessages = new();
+    private ChangePasswordModel changeModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var principal = authState.User;
+
+            if (principal?.Identity is null || !principal.Identity.IsAuthenticated)
+            {
+                Nav.NavigateTo("/login", true);
+                return;
+            }
+
+            currentUser = await UserManager.GetUserAsync(principal);
+            if (currentUser is null)
+            {
+                loadError = "Nepodaøilo se naèíst údaje o uživateli.";
+                return;
+            }
+
+            hasPassword = await UserManager.HasPasswordAsync(currentUser);
+        }
+        catch (Exception ex)
+        {
+            loadError = $"Naètení profilu selhalo: {ex.Message}";
+        }
+    }
+
+    private async Task HandleChangePassword()
+    {
+        errorMessages.Clear();
+        successMessage = null;
+
+        if (currentUser is null)
+        {
+            errorMessages.Add("Uživatel není k dispozici.");
+            return;
+        }
+
+        try
+        {
+            IdentityResult result;
+            if (hasPassword)
+            {
+                result = await UserManager.ChangePasswordAsync(currentUser, changeModel.CurrentPassword, changeModel.NewPassword);
+            }
+            else
+            {
+                result = await UserManager.AddPasswordAsync(currentUser, changeModel.NewPassword);
+            }
+
+            if (result.Succeeded)
+            {
+                await SignInManager.RefreshSignInAsync(currentUser);
+                successMessage = hasPassword ? "Heslo bylo úspìšnì zmìnìno." : "Heslo bylo úspìšnì nastaveno.";
+                changeModel = new ChangePasswordModel();
+                hasPassword = await UserManager.HasPasswordAsync(currentUser);
+            }
+            else
+            {
+                foreach (var e in result.Errors)
+                    errorMessages.Add(e.Description);
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessages.Add($"Operace selhala: {ex.Message}");
+        }
+    }
+
+    public class ChangePasswordModel
+    {
+        [Required(ErrorMessage = "Zadejte souèasné heslo.")]
+        public string CurrentPassword { get; set; } = "";
+
+        [Required(ErrorMessage = "Zadejte nové heslo.")]
+        [StringLength(100, MinimumLength = 6, ErrorMessage = "Heslo musí mít alespoò {2} znakù.")]
+        public string NewPassword { get; set; } = "";
+
+        [Required(ErrorMessage = "Potvrïte nové heslo.")]
+        [Compare(nameof(NewPassword), ErrorMessage = "Hesla se neshodují.")]
+        public string ConfirmPassword { get; set; } = "";
+    }
+}
