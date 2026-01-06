@@ -1,62 +1,31 @@
 ﻿@page "/login"
-@using Microsoft.AspNetCore.Components.Forms
-@using Microsoft.AspNetCore.Identity
-@using Domain.Entities
-@inject NavigationManager Nav
-@inject UserManager<User> UserManager
 
-@if (!string.IsNullOrWhiteSpace(errorMessage))
-{
-    <div class="alert alert-danger" role="alert">@errorMessage</div>
-}
+<h2>Přihlášení</h2>
 
-<EditForm Model="@model" OnValidSubmit="HandleLogin">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+<div class="stack">
+    <label class="label" for="email">E-mail</label>
+    <input id="email" class="input" @bind="email" type="email" />
 
-    <div>
-        <label>Email:</label>
-        <InputText @bind-Value="model.Email" class="form-control" autofocus />
-        <ValidationMessage For="@(() => model.Email)" />
+    <label class="label" for="password">Heslo</label>
+    <input id="password" class="input" @bind="password" type="password" />
+
+    <div class="mt-3">
+        <button class="btn btn-primary" @onclick="SignIn">Přihlásit</button>
+        <button class="btn btn-accent mt-2" @onclick="GoHome">Zpět</button>
     </div>
-
-    <div>
-        <label>Heslo:</label>
-        <InputText @bind-Value="model.Password" type="password" class="form-control" />
-        <ValidationMessage For="@(() => model.Password)" />
-    </div>
-
-    <button type="submit" class="btn btn-primary mt-2">Přihlásit</button>
-</EditForm>
+</div>
 
 @code {
-    private LoginModel model = new();
-    private string? errorMessage;
+    private string email = string.Empty;
+    private string password = string.Empty;
 
-    public class LoginModel
+    private async Task SignIn()
     {
-        [System.ComponentModel.DataAnnotations.Required]
-        [System.ComponentModel.DataAnnotations.EmailAddress]
-        public string Email { get; set; } = "";
-
-        [System.ComponentModel.DataAnnotations.Required]
-        public string Password { get; set; } = "";
+        var uri = $"/auth/signin?email={Uri.EscapeDataString(email)}&password={Uri.EscapeDataString(password)}";
+        Navigation.NavigateTo(uri, forceLoad: true);
     }
 
-    private async Task HandleLogin()
-    {
-        errorMessage = null;
-
-        var email = model.Email?.Trim() ?? "";
-        var user = await UserManager.FindByEmailAsync(email);
-        if (user is null)
-        {
-            errorMessage = "Uživatel s tímto e‑mailem neexistuje. Zadejte prosím jiný e‑mail nebo se zaregistrujte.";
-            return;
-        }
-
-        var url = $"/auth/signin?email={Uri.EscapeDataString(model.Email)}&password={Uri.EscapeDataString(model.Password)}";
-        Nav.NavigateTo(url, forceLoad: true);
-    }
+    [Inject] NavigationManager Navigation { get; set; } = default!;
+    private void GoHome() => Navigation.NavigateTo("/");
 }
 

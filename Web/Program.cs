@@ -13,7 +13,6 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor()
     .AddCircuitOptions(o => { o.DetailedErrors = true; });
 
-// DB context
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"),
@@ -21,7 +20,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     )
 );
 
-// Repositories & services
 builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
 
@@ -30,7 +28,6 @@ builder.Services.AddScoped<IRoomService, RoomService>();
 
 builder.Services.AddScoped<ISeatRepository, SeatRepository>();
 
-// Identity & Authentication
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -39,10 +36,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.IsEssential = true;
         options.Events = new CookieAuthenticationEvents
         {
-            // Zajistí, že pøi startu bez platné cookie nebude obnovená perzistence
             OnValidatePrincipal = context =>
             {
-                // sem není nutné nic dávat, dùležité je nepoužívat perzistentní cookie pøi loginu
                 return Task.CompletedTask;
             }
         };
@@ -75,7 +70,6 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapBlazorHub();
 app.MapRazorPages();
 

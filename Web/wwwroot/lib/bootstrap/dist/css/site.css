@@ -1,4 +1,273 @@
-:root { color-scheme: light dark; }
-html, body { height: 100%; }
-body { margin: 0; padding: 1rem; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; color: #111; background: #fff; }
-app { display: block; }
+:root {
+    --color-bg: #0f0f14;
+    --color-surface: #161625;
+    --color-text: #e9e9f1;
+    --color-muted: #b7b7c7;
+    --color-primary: #2ecc71;
+    --color-primary-700: #27ae60;
+    --color-primary-900: #1e874b;
+    --color-accent: #8e44ad;
+    --color-accent-700: #7d3c98;
+    --color-accent-900: #6c3483;
+    --ring: 2px solid rgba(142, 68, 173, 0.35);
+    --radius: 10px;
+    --shadow: 0 8px 24px rgba(0,0,0,0.35);
+}
+
+/* Reset + základ */
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    background: linear-gradient(135deg, var(--color-bg) 0%, #111118 100%);
+    color: var(--color-text);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.5;
+}
+
+.app-shell {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+.app-header {
+    background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-primary) 100%);
+    color: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.app-brand {
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    font-size: 20px;
+}
+
+.app-nav a {
+    color: #ffffff;
+    text-decoration: none;
+    margin-left: 14px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: background 160ms ease, transform 160ms ease;
+}
+
+    .app-nav a:hover {
+        background: rgba(255,255,255,0.18);
+        transform: translateY(-1px);
+    }
+
+.card {
+    background: linear-gradient(180deg, var(--color-surface) 0%, #1b1b2e 100%);
+    border: 1px solid rgba(142,68,173,0.25);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 18px;
+    --bs-card-color: var(--color-text);
+    color: var(--color-text);
+}
+
+.btn {
+    appearance: none;
+    border: none;
+    cursor: pointer;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-weight: 600;
+    transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+
+    .btn:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.35);
+    }
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-700) 100%);
+    color: #0d1a10;
+}
+
+    .btn-primary:hover {
+        transform: translateY(-1px);
+    }
+
+.btn-accent {
+    background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-700) 100%);
+    color: #ffffff;
+}
+
+    .btn-accent:hover {
+        transform: translateY(-1px);
+    }
+
+.btn-outline {
+    background: transparent;
+    color: var(--color-text);
+    border: 1px solid var(--color-accent-700);
+}
+
+    .btn-outline:hover {
+        background: rgba(142,68,173,0.15);
+    }
+
+.input, input[type="text"], input[type="email"], input[type="password"], input[type="date"], select, textarea, .form-control, .form-select {
+    width: 100%;
+    background: #12121d;
+    border: 1px solid rgba(142,68,173,0.35);
+    color: var(--color-text);
+    border-radius: 10px;
+    padding: 10px 12px;
+    transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease, color 120ms ease;
+}
+
+    .input:focus, input:focus, select:focus, textarea:focus, .form-control:focus, .form-select:focus {
+        outline: none;
+        border-color: var(--color-primary-700);
+        box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.25);
+        background: #12121d;
+        color: var(--color-text);
+    }
+
+.label, .form-label {
+    display: block;
+    color: var(--color-muted);
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+.stack {
+    display: grid;
+    gap: 12px;
+}
+
+.stack-lg {
+    display: grid;
+    gap: 18px;
+}
+
+.center {
+    display: grid;
+    place-items: center;
+}
+
+.mt-2 {
+    margin-top: 8px;
+}
+
+.mt-3 {
+    margin-top: 12px;
+}
+
+.mt-4 {
+    margin-top: 18px;
+}
+
+.text-muted {
+    color: var(--color-muted);
+}
+
+.blazor-error-boundary {
+    border-radius: var(--radius);
+    border: 1px dashed rgba(142, 68, 173, 0.5);
+    padding: 16px;
+}
+
+.spinner {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.2);
+    border-top-color: var(--color-primary);
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.table {
+    --tbl-bg: #151522;
+    --tbl-bg-alt: #1a1a2b;
+    --tbl-border: rgba(255,255,255,0.08);
+    --tbl-head-bg: #12121d;
+    --tbl-head-color: var(--color-text);
+
+    color: var(--color-text);
+    background-color: var(--tbl-bg);
+    border-color: var(--tbl-border);
+}
+
+.table > :not(caption) > * > * {
+    background-color: transparent;
+    color: inherit;
+    border-bottom-color: var(--tbl-border);
+}
+
+.table thead th {
+    background-color: var(--tbl-head-bg);
+    color: var(--tbl-head-color);
+    border-bottom-color: var(--tbl-border);
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) > * {
+    background-color: var(--tbl-bg-alt);
+}
+
+.table-hover > tbody > tr:hover > * {
+    background-color: rgba(255,255,255,0.04);
+}
+
+.table-bordered > :not(caption) > * {
+    border-color: var(--tbl-border);
+}
+
+.table-dark {
+    color: var(--color-text);
+    background-color: var(--tbl-bg);
+    border-color: var(--tbl-border);
+}
+
+:root {
+    --bs-body-bg: var(--color-bg);
+    --bs-body-color: var(--color-text);
+    --bs-heading-color: var(--color-text);
+    --bs-link-color: var(--color-primary);
+    --bs-link-hover-color: var(--color-primary-700);
+    --bs-border-color: rgba(255,255,255,0.12);
+    --bs-card-bg: var(--color-surface);
+    --bs-card-color: var(--color-text);
+}
+
+.card {
+    --bs-card-color: var(--color-text);
+    color: var(--color-text);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--bs-heading-color);
+}
+
+a, .nav-link, .page-link {
+    color: var(--bs-link-color);
+}
+a:hover, .nav-link:hover, .page-link:hover {
+    color: var(--bs-link-hover-color);
+}
+
+.btn {
+    color: var(--color-text);
+}

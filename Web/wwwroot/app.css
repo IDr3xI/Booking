@@ -75,17 +75,17 @@ h1:focus {
 }
 
 .seat-free {
-    background-color: #4CAF50; /* zelená */
+    background-color: #4CAF50;
     color: white;
 }
 
 .seat-occupied {
-    background-color: #d9534f; /* èervená */
+    background-color: #d9534f;
     color: white;
 }
 
 .seat-selected {
-    background-color: #0275d8; /* modrá */
+    background-color: #0275d8;
     color: white;
     transform: scale(1.1);
 }
