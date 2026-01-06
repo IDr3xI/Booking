@@ -3,6 +3,7 @@ using Application.Services;
 using Domain.Entities;
 using Infrastructure.Data;
 using Infrastructure.Repositories;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -30,6 +31,23 @@ builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<ISeatRepository, SeatRepository>();
 
 // Identity & Authentication
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.SlidingExpiration = false;
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+        options.Cookie.IsEssential = true;
+        options.Events = new CookieAuthenticationEvents
+        {
+            // Zajistí, že pøi startu bez platné cookie nebude obnovená perzistence
+            OnValidatePrincipal = context =>
+            {
+                // sem není nutné nic dávat, dùležité je nepoužívat perzistentní cookie pøi loginu
+                return Task.CompletedTask;
+            }
+        };
+    });
+
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
     options.Password.RequireDigit = true;
@@ -72,7 +90,7 @@ app.MapGet("/auth/signin", async (UserManager<User> userManager, SignInManager<U
     var user = await userManager.FindByEmailAsync(email);
     if (user is null) return Results.BadRequest("Uživatel neexistuje.");
 
-    var signInResult = await signInManager.PasswordSignInAsync(user, password, isPersistent: true, lockoutOnFailure: false);
+    var signInResult = await signInManager.PasswordSignInAsync(user, password, isPersistent: false, lockoutOnFailure: false);
     if (!signInResult.Succeeded) return Results.BadRequest("Pøihlášení se nezdaøilo.");
 
     return Results.Redirect("/");
@@ -83,7 +101,7 @@ app.MapPost("/auth/signin", async (UserManager<User> userManager, SignInManager<
     var user = await userManager.FindByEmailAsync(email);
     if (user is null) return Results.BadRequest("Uživatel neexistuje.");
 
-    var signInResult = await signInManager.PasswordSignInAsync(user, password, isPersistent: true, lockoutOnFailure: false);
+    var signInResult = await signInManager.PasswordSignInAsync(user, password, isPersistent: false, lockoutOnFailure: false);
     if (!signInResult.Succeeded) return Results.BadRequest("Pøihlášení se nezdaøilo.");
 
     return Results.Redirect("/");

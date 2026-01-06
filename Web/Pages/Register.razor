@@ -14,6 +14,18 @@
     <ValidationSummary />
 
     <div>
+        <label>Jméno:</label>
+        <InputText @bind-Value="model.FirstName" class="form-control" />
+        <ValidationMessage For="@(() => model.FirstName)" />
+    </div>
+
+    <div>
+        <label>Příjmení:</label>
+        <InputText @bind-Value="model.LastName" class="form-control" />
+        <ValidationMessage For="@(() => model.LastName)" />
+    </div>
+
+    <div>
         <label>Email:</label>
         <InputText @bind-Value="model.Email" class="form-control" />
         <ValidationMessage For="@(() => model.Email)" />
@@ -44,8 +56,17 @@
 
     public class RegisterModel
     {
+        [Required(ErrorMessage = "Jméno je povinné.")]
+        [StringLength(100, ErrorMessage = "Jméno je příliš dlouhé.")]
+        public string FirstName { get; set; } = "";
+
+        [Required(ErrorMessage = "Příjmení je povinné.")]
+        [StringLength(100, ErrorMessage = "Příjmení je příliš dlouhé.")]
+        public string LastName { get; set; } = "";
+
         [Required(ErrorMessage = "Email je povinný.")]
         [EmailAddress(ErrorMessage = "Zadejte platný email.")]
+        [StringLength(100)]
         public string Email { get; set; } = "";
 
         [Required(ErrorMessage = "Heslo je povinné.")]
@@ -62,7 +83,14 @@
     {
         errorMessages.Clear();
 
-        var user = new User { UserName = model.Email, Email = model.Email };
+        var displayName = $"{model.FirstName.Trim()} {model.LastName.Trim()}".Trim();
+
+        var user = new User
+        {
+            UserName = model.Email,
+            Email = model.Email,
+            DisplayName = displayName
+        };
 
         IdentityResult result;
         try

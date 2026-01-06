@@ -1,10 +1,12 @@
 ﻿@page "/"
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Identity
+@attribute [IgnoreAntiforgeryToken]
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @namespace Web.Pages
 @{
     Layout = null;
 }
-
 <!DOCTYPE html>
 <html lang="cs">
 <head>
@@ -18,6 +20,9 @@
     <link rel="icon" href="~/favicon.png" type="image/svg+xml" />
 </head>
 <body>
+    <app>
+        @(await Html.RenderComponentAsync<App>(RenderMode.ServerPrerendered))
+    </app>
     <component type="typeof(Web.App)" render-mode="Server" />
     <script src="_framework/blazor.server.js"></script>
 </body>

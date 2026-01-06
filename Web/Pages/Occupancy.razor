@@ -100,8 +100,10 @@ else
         var res = Reservations.FirstOrDefault(r => r.SeatId == seat.Id && r.BookDate == d);
         if (res is null) return "Obsazeno";
 
-        var email = res.User?.Email;
-        var who = !string.IsNullOrWhiteSpace(email) ? email : res.UserId;
+        var displayName = res.User?.DisplayName;
+        var who = !string.IsNullOrWhiteSpace(displayName)
+            ? displayName
+            : (!string.IsNullOrWhiteSpace(res.User?.Email) ? res.User!.Email! : res.UserId);
 
         var createdLocal = res.CreateDate.ToLocalTime();
         var createdStr = createdLocal.ToString("dd.MM.yyyy HH:mm", CultureInfo.CurrentCulture);

@@ -2,6 +2,7 @@
 @using Domain.Entities
 @using Application.Interfaces
 @using Microsoft.AspNetCore.Components.Authorization
+@attribute [Authorize]
 
 <h3>Moje rezervace</h3>
 
@@ -49,13 +50,6 @@ else
     {
         var auth = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = auth.User;
-
-        if (!user.Identity?.IsAuthenticated ?? true)
-        {
-            Reservations = new();
-            isLoading = false;
-            return;
-        }
 
         var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrWhiteSpace(userId))
